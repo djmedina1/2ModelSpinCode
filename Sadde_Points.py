@@ -2,6 +2,8 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
+from scipy.optimize import minimize
+
 
 
 def calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis):
@@ -34,6 +36,10 @@ def calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis):
     
     return energy_total, magnetization, dE_dPhi
 
+def calculate_energy(H, Phi, J_AF, M, Ku, K1, anisotropy_axis):
+    energy = K1 * (np.cos(Phi - anisotropy_axis) ** 2) - H * M
+    return energy
+
 # Example usage (unchanged)
 H_values = [-1.5, -1.0, -0.75, -0.5, 0, 0.5, 0.75, 1.0, 1.5]
 Phi_values = np.linspace(0, 361,1000)
@@ -44,26 +50,35 @@ K1 = 1
 anisotropy_axis = np.radians(45)
 
 
-# Arrays to accumulate energy and magnetization values for each H
-energy_values_list = []
-magnetization_values_list = []
-dE_dPhi_list = []
-easy_axis_min_angles_list = []   # To store the angles of the easy axis minimum for different H values
+# List to keep track of saddle points
+saddle_points = []
 
 for H in H_values:
-    energy_values, magnetization_values, dE_dPhi = calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis)
-    energy_values_list.append(energy_values)
-    magnetization_values_list.append(magnetization_values)
-    dE_dPhi_list.append(dE_dPhi)
+    # Define the energy function for a given H, keeping other parameters constant
+    energy_func = lambda Phi: calculate_energy(H, Phi, J_AF, M, Ku, K1, anisotropy_axis)
 
-    # Find peaks (minima) in the energy values array for each H
-    min_energy_indices, _ = find_peaks(-energy_values)
-    if len(min_energy_indices) > 0:
-        min_energy_index = min_energy_indices[0]
-        easy_axis_min_angle = Phi_values[:-1][min_energy_index]
-        easy_axis_min_angles_list.append(easy_axis_min_angle)
-    else:
-        easy_axis_min_angles_list.append(None)
+    # Find the critical points using numerical optimization
+    result = minimize(energy_func, x0=1.57)  # Start the optimization from Phi=0.0 degrees
+
+    # Check if the optimization was successful
+    if result.success and result.fun is not None:
+        Phi_critical = result.x[0]
+        energy_at_critical = result.fun
+
+        # Calculate the Hessian matrix to classify critical point
+        hessian_matrix = np.gradient(np.gradient(energy_func(Phi_values)), Phi_values)
+        hessian_matrix = np.diag(hessian_matrix)  # Convert to a diagonal matrix
+
+        eigenvalues = np.linalg.eigvals(hessian_matrix)
+
+        if np.any(np.real(eigenvalues) > 0) and np.any(np.real(eigenvalues) < 0):
+            # Critical point has both positive and negative eigenvalues, indicating a saddle point
+            saddle_points.append((H, np.degrees(Phi_critical), energy_at_critical))
+
+# Print saddle points
+print("Saddle points (H, Phi, Energy):")
+for point in saddle_points:
+    print(point)
 
 # Plot energy values for each H
 plt.figure(figsize=(10, 5))
