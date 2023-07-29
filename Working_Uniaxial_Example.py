@@ -109,7 +109,7 @@ min_angle_degrees_list = []
 field_strengths_list = []
 
 # Pair the found easy axis minimums with their corrosponding field strengths. 
-for i, H in enumerate(H_values):
+for i, H in enumerate(H_values[:-1]): #Excludes last point 
     easy_axis_min_angles = easy_axis_min_angles_list[i]
     if easy_axis_min_angles is not None:
         # Convert the angle from radians to degrees
@@ -151,8 +151,9 @@ minimum_found_list = [False] * len(H_values)
 inflection_included_list = [False] * len(H_values)  # To track if an inflection point is already included
 inflection_found = False
 
+H_values_Inc = H_values[1:]
 
-for i, H in enumerate(H_values[::-1]):
+for i, H in enumerate(H_values_Inc[::-1]):
     energy_values, dE_dPhi, d2E_dPhi2 = calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis)
     energy_values_list.append(energy_values)
 
@@ -209,7 +210,7 @@ for i, H in enumerate(H_values[::-1]):
 
 min_angle_degrees_list = []
 field_strengths_list = []
-for i, H in enumerate(H_values[::-1]):
+for i, H in enumerate(H_values_Inc[::-1]):
     easy_axis_min_angles = easy_axis_min_angles_list[i]
     if easy_axis_min_angles is not None:
         # Convert the angle from radians to degrees
@@ -237,9 +238,9 @@ plt.scatter(field_strengths_array, min_angle_degrees_list, color='red', marker='
 
 #PLOT
 
-plt.xlabel('Applied Field Strength (H)')
-plt.ylabel('Easy Axis Minimum Angle (degrees)')
-plt.title('Easy Axis Minimum Angle vs Applied Field Strength')
+plt.xlabel('Applied Field Strength H (T)')
+plt.ylabel('M/M_s')
+plt.title('M/M_s vs Applied Field Strength')
 plt.ylim(-1, 1)  # Set the y-axis limits to -1 and 1
 plt.grid(True)
 plt.show()
