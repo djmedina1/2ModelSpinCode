@@ -237,10 +237,6 @@ plt.scatter(field_strengths_array, min_angle_degrees_list, color='red', marker='
 
 #PLOT
 
-
-
-
-
 plt.xlabel('Applied Field Strength (H)')
 plt.ylabel('Easy Axis Minimum Angle (degrees)')
 plt.title('Easy Axis Minimum Angle vs Applied Field Strength')

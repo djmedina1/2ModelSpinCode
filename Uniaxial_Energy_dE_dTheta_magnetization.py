@@ -105,4 +105,3 @@ plt.ylabel('Cosine of Easy Axis Minimum Angle')
 plt.title('Cosine of Easy Axis Minimum Angle vs Applied Field Strength')
 plt.grid(True)
 plt.show()
-
