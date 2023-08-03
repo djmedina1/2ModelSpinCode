@@ -3,6 +3,9 @@ import math
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 
+'''
+The pupose of this code is to simulate a 2 Dimensional 1 spin system and it's response to an applied field
+'''
 
 def calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis):
     # Convert angles to radians
@@ -25,8 +28,8 @@ def calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis):
 
 # Example usage (unchanged)
 #The problem is decreasing (field sweep) doesn't produce the right output.
-H_values = [1.5, 1.0, 0.75, 0.5, 0, -0.5, -0.75, -1.0, -1.5] #Decreasing
-#H_values = [-1.5, -1.0, -0.75, -0.5, 0, 0.5, 0.75, 1.0, 1.5] #Increasing
+#H_values = [1.5, 1.0, 0.75, 0.5, 0, -0.5, -0.75, -1.0, -1.5] #Decreasing
+H_values = np.linspace(1.5, -1.5, 10)
 Phi_values = np.linspace(0, 360,1000)
 J_AF = 0
 M = -1 
@@ -153,6 +156,11 @@ inflection_found = False
 
 H_values_Inc = H_values[1:]
 
+'''
+
+Try to extend the lower liens of this code; redundant; Relates to the incremental factor. 
+'''
+
 for i, H in enumerate(H_values_Inc[::-1]):
     energy_values, dE_dPhi, d2E_dPhi2 = calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis)
     energy_values_list.append(energy_values)
@@ -241,16 +249,25 @@ plt.scatter(field_strengths_array, min_angle_degrees_list, color='red', marker='
 plt.xlabel('Applied Field Strength H (T)')
 plt.ylabel('M/M_s')
 plt.title('M/M_s vs Applied Field Strength')
-plt.ylim(-1, 1)  # Set the y-axis limits to -1 and 1
 plt.grid(True)
 plt.show()
 
         
 
+'''
+Debugging
+'''
 
+##plt.figure(figize = (10,5))
+##for i, H in enumerate(H_values):
+##    energy_values = energy_val_list[i]
+##    label_text = f'H={H}'
+##    plt.plt(Phi_valdues[:], energy_values, label=label_text)
+##x_ticks = np.arrange(0,361,45)
+##plt.xticks(x_ticks)
 #Plot energy_values for each H
 plt.figure(figsize=(10, 5))
-for i, H in enumerate(H_values):
+for i, H in enumerate(H_values[1:]):
     energy_values = energy_values_list[i]
     label_text = f'H={H}'
     plt.plot(Phi_values[:],energy_values, label=label_text)
