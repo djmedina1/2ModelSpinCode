@@ -12,7 +12,6 @@
   <li> Plot the cosine of the minimum field angles with respect to the applied field strength to produce a hysteresis loop.</li>
 </ul>
 
- <a href ="public/Simulation_Diagram.png"></a>
-
+ ![Reference Diagram](public/Simulation_Diagram.png)
 =======
 ## This repo only contains a working simulation of a **one** spin system. 2 spins is currently being developed (as of 6/30/23). 
