@@ -13,5 +13,20 @@
 </ul>
 
  ![Reference Diagram](public/Simulation_Diagram.png)
+
+# Two Spin System 
+<p> A two spin system is to be simulated to model is to be implmented with the motivation to investigate a bilayer thin film system (As outlined in Folekrts et al 1990).
+
+We are interested in the the anti-ferromagnetic coupling exchange energy
+</p>
+
+<ul>
+<li>In total there are three equations this simulation will consider</li>
+<li> Zeeman Energy: -0.5 * H * M cos(phi_1 + phi_2)</li.>
+<li> Exchange (Coupling Term): - J_AF * cos(phi_2 - phi_1) </li>
+<li> Anistrotropy Energy (Cubic Symmetry, [001] growth):(0.125) * K1 * (Sin^2(2 * phi_1) + Sin^2( 2 * phi_2))</li> 
+</ul>
+
+By considering the LLG solution the system we can create more sophisticated (and more accurate ouput)
 =======
 ## This repo only contains a working simulation of a **one** spin system. 2 spins is currently being developed (as of 6/30/23). 

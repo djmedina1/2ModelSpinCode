@@ -26,11 +26,13 @@ def calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis):
 
     return energy_total, dE_dPhi, d2E_dPhi2  # Include the second derivative in the return statement
 
-# Example usage 
-H_values = np.linspace(1.5, -1.5, 9)
-Phi_values = np.linspace(0, 360,1000)
+# Example usage (unchanged)
+#The problem is decreasing (field sweep) doesn't produce the right output.
+#H_values = [1.5, 1.0, 0.75, 0.5, 0, -0.5, -0.75, -1.0, -1.5] #Decreasing
+H_values = np.linspace(1.5, -1.5, 100)
+Phi_values = np.linspace(0, 360,9)
 J_AF = 0
-M = 1 
+M = -1 
 Ku = 1
 K1 = 1
 anisotropy_axis = np.radians(45)
@@ -52,7 +54,7 @@ inflection_found = False
 
 #Inflection Point and Minimum Calculations (Decreasing Field)
 for i, H in enumerate(H_values):
-    energy_values, dE_dPhi, d2E_dPhi2 = calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis )
+    energy_values, dE_dPhi, d2E_dPhi2 = calculate_energy_sweep(H, Phi_values + 180, J_AF, M, Ku, K1, anisotropy_axis )
     energy_values_list.append(energy_values)
 
     dE_dPhi_list.append(dE_dPhi)
@@ -60,28 +62,44 @@ for i, H in enumerate(H_values):
 
     # Find the points of inflection using the sign change in the second derivative
     inflection_indices = np.where(np.diff(np.sign(d2E_dPhi2)))[0]
-    inflection_points = Phi_values[:-1][inflection_indices] 
+    inflection_points = Phi_values[:-1][inflection_indices]
 
+    # Append inflection points only if a minimum has not been found yet for this H value
+    if not minimum_found_list[i]:
+        energy_min_indices, _ = find_peaks(-energy_values)  # Negative energy values to find minima
+        if len(energy_min_indices) > 0:
+            min_energy_index = energy_min_indices[0]
+            easy_axis_min_angle = Phi_values[:-1][min_energy_index]
+            # Mark that a minimum has been found for this H value, so no more inflection points will be considered
+            minimum_found_list[i] = True
 
-    energy_min_indices, _ = find_peaks(-energy_values)  # Negative energy values to find minima
-    if len(energy_min_indices) > 0:
-        min_energy_index = energy_min_indices[0]
-        easy_axis_min_angle = Phi_values[:][min_energy_index]
-        # Mark that a minimum has been found for this H value, so no more inflection points will be considered
-        minimum_found_list[i] = True
-
-        # Check if any inflection points were found before the minimum and at or past 90 degrees (pi/2 radians)
-        valid_inflection_points = [angle for angle in inflection_points if round(angle) >= 90 and angle < easy_axis_min_angle and not inflection_found]
-        if len(valid_inflection_points) > 0:
-            # Include the first valid inflection point that occurs (if not already included)
-            for inflection_point in valid_inflection_points:
-                if not inflection_included_list[i]:
-                    inflection_found = True
-                    easy_axis_min_angles_list.append([easy_axis_min_angle , inflection_point])
-                    inflection_included_list[i] = True
+            # Check if any inflection points were found before the minimum and at or past 90 degrees (pi/2 radians)
+            valid_inflection_points = [angle for angle in inflection_points if round(angle) >= 90 and angle < easy_axis_min_angle and not inflection_found]
+            if len(valid_inflection_points) > 0:
+                # Include the first valid inflection point that occurs (if not already included)
+                for inflection_point in valid_inflection_points:
+                    if not inflection_included_list[i]:
+                        inflection_found = True
+                        easy_axis_min_angles_list.append([easy_axis_min_angle , inflection_point])
+                        inflection_included_list[i] = True
+            else:
+                # If no valid inflection points were found, add only the minimum to the list
+                easy_axis_min_angles_list.append(easy_axis_min_angle)
         else:
-            # If no valid inflection points were found, add only the minimum to the list
-            easy_axis_min_angles_list.append(easy_axis_min_angle)
+            # If no minimum is found, check if any inflection point is available and include it
+            if len(inflection_points) > 0:
+                # Check if any inflection points were found at or past 90 degrees (pi/2 radians)
+                valid_inflection_points = [angle for angle in inflection_points if round(angle) >= 90]
+                if len(valid_inflection_points) > 0:
+                    # Include the first valid inflection point (occurs at or past 90 degrees) if not already included
+                    if not inflection_included_list[i]:
+                        easy_axis_min_angles_list.append(valid_inflection_points[0])
+                        inflection_included_list[i] = True
+                    # No need to mark the minimum found here since we are including an inflection point
+                else:
+                    easy_axis_min_angles_list.append(None)
+            else:
+                easy_axis_min_angles_list.append(None)
 
     inflection_points_list.append(inflection_points)
 
@@ -99,8 +117,8 @@ for i, H in enumerate(H_values[:-1]): #Excludes last point
     if easy_axis_min_angles is not None:
         # Convert the angle from radians to degrees
         easy_axis_min_angle_deg = easy_axis_min_angles
-        #print(f'{H}:')
-        #print(easy_axis_min_angle_deg)
+        print(f'{H}:')
+        print(easy_axis_min_angle_deg)
         # Append the easy axis minimum angles and the corresponding field strength to the lists
         if isinstance(easy_axis_min_angles, list):
             # Handle the case of multiple angles for the same field strength
@@ -116,6 +134,7 @@ for i, H in enumerate(H_values[:-1]): #Excludes last point
 field_strengths_array = np.array(field_strengths_list, dtype=float)
 plt.scatter(field_strengths_array, min_angle_degrees_list, color='green', marker='o')
 
+print('end of decreasing')
 
 #END OF DECREASING FIELD PLOTTING
 
@@ -138,7 +157,7 @@ inflection_found = False
 H_values_Inc = H_values[1:]
 
 for i, H in enumerate(H_values_Inc[::-1]):
-    energy_values, dE_dPhi, d2E_dPhi2 = calculate_energy_sweep(H, Phi_values + 180, J_AF, M, Ku, K1, anisotropy_axis)
+    energy_values, dE_dPhi, d2E_dPhi2 = calculate_energy_sweep(H, Phi_values, J_AF, M, Ku, K1, anisotropy_axis)
     energy_values_list.append(energy_values)
 
     dE_dPhi_list.append(dE_dPhi)
@@ -148,32 +167,48 @@ for i, H in enumerate(H_values_Inc[::-1]):
     inflection_indices = np.where(np.diff(np.sign(d2E_dPhi2)))[0]
     inflection_points = Phi_values[:-1][inflection_indices]
 
-    energy_min_indices, _ = find_peaks(-energy_values)  # Negative energy values to find minima
-    if len(energy_min_indices) > 0:
-        min_energy_index = energy_min_indices[0]
-        easy_axis_min_angle = Phi_values[:-1][min_energy_index]
-        # Mark that a minimum has been found for this H value, so no more inflection points will be considered
-        minimum_found_list[i] = True
+    # Append inflection points only if a minimum has not been found yet for this H value
+    if not minimum_found_list[i]:
+        energy_min_indices, _ = find_peaks(-energy_values)  # Negative energy values to find minima
+        if len(energy_min_indices) > 0:
+            min_energy_index = energy_min_indices[0]
+            easy_axis_min_angle = Phi_values[:-1][min_energy_index]
+            # Mark that a minimum has been found for this H value, so no more inflection points will be considered
+            minimum_found_list[i] = True
 
-        # Check if any inflection points were found before the minimum and at or past 90 degrees (pi/2 radians)
-        valid_inflection_points = [angle for angle in inflection_points if round(angle) >= 90 and angle < easy_axis_min_angle and not inflection_found]
-        if len(valid_inflection_points) > 0:
-            # Include the first valid inflection point that occurs (if not already included)
-            for inflection_point in valid_inflection_points:
-                if not inflection_included_list[i]:
-                    inflection_found = True
-                    easy_axis_min_angles_list.append([easy_axis_min_angle - 180, inflection_point])
-                    inflection_included_list[i] = True
+            # Check if any inflection points were found before the minimum and at or past 90 degrees (pi/2 radians)
+            valid_inflection_points = [angle for angle in inflection_points if round(angle) >= 90 and angle < easy_axis_min_angle and not inflection_found]
+            if len(valid_inflection_points) > 0:
+                # Include the first valid inflection point that occurs (if not already included)
+                for inflection_point in valid_inflection_points:
+                    if not inflection_included_list[i]:
+                        inflection_found = True
+                        easy_axis_min_angles_list.append([easy_axis_min_angle - 180, inflection_point])
+                        inflection_included_list[i] = True
 
-            # Include the minimum
-            #easy_axis_min_angles_list.append(easy_axis_min_angle)
-            
+                # Include the minimum
+                #easy_axis_min_angles_list.append(easy_axis_min_angle)
+                
+            else:
+                # If no valid inflection points were found, add only the minimum to the list
+                easy_axis_min_angles_list.append(easy_axis_min_angle)
         else:
-            # If no valid inflection points were found, add only the minimum to the list
-            easy_axis_min_angles_list.append(easy_axis_min_angle)
+            # If no minimum is found, check if any inflection point is available and include it
+            if len(inflection_points) > 0:
+                # Check if any inflection points were found at or past 90 degrees (pi/2 radians)
+                valid_inflection_points = [angle for angle in inflection_points if round(angle) >= 90]
+                if len(valid_inflection_points) > 0:
+                    # Include the first valid inflection point (occurs at or past 90 degrees) if not already included
+                    if not inflection_included_list[i]:
+                        easy_axis_min_angles_list.append(valid_inflection_points[0])
+                        inflection_included_list[i] = True
+                    # No need to mark the minimum found here since we are including an inflection point
+                else:
+                    easy_axis_min_angles_list.append(None)
+            else:
+                easy_axis_min_angles_list.append(None)
 
     inflection_points_list.append(inflection_points)
-
 
 
 min_angle_degrees_list = []
@@ -183,8 +218,8 @@ for i, H in enumerate(H_values_Inc[::-1]):
     if easy_axis_min_angles is not None:
         # Convert the angle from radians to degrees
         easy_axis_min_angle_deg = easy_axis_min_angles
-        #print(f'{H}:')
-        #print(easy_axis_min_angle_deg)
+        print(f'{H}:')
+        print(easy_axis_min_angle_deg)
         # Append the easy axis minimum angles and the corresponding field strength to the lists
         if isinstance(easy_axis_min_angles, list):
             # Handle the case of multiple angles for the same field strength
@@ -196,11 +231,15 @@ for i, H in enumerate(H_values_Inc[::-1]):
             field_strengths_list.append(H)
 
 
-# Hysteresis Chart
 
-### Convert the field_strengths_list to a NumPy array
+
+# Convert the field_strengths_list to a NumPy array
 field_strengths_array = np.array(field_strengths_list, dtype=float)
 plt.scatter(field_strengths_array, min_angle_degrees_list, color='red', marker='x')
+
+
+
+#PLOT
 
 plt.xlabel('Applied Field Strength H (T)')
 plt.ylabel('M/M_s')
@@ -211,13 +250,12 @@ plt.show()
         
 
 '''
-Debugging (Energy Plots)
+Debugging
 '''
 ###Plot energy_values for each H
 ##plt.figure(figsize=(10, 5))
 ##for i, H in enumerate(H_values):
 ##    energy_values = energy_values_list[i]
-##    print(energy_values_list)
 ##    label_text = f'H={H}'
 ##    plt.plot(Phi_values[:],energy_values, label=label_text)
 ### Add the legend to the plot
